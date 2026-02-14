@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Helius WebSocket Playground",
   description: "Interactive WebSocket playground for Solana programSubscribe",
+  icons: {
+    icon: "/icon.png?v=2",
+  },
 };
 
 export default function RootLayout({
@@ -23,9 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>

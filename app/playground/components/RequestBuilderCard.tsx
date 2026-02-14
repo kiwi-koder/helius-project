@@ -4,33 +4,45 @@ import BuilderForm from "./builder/BuilderForm";
 import RawJsonPreview from "./RawJsonPreview";
 import { buildRequest } from "../lib/buildRequest";
 import Tabs from "./Tabs";
+import HelpTooltip from "./HelpTooltip";
+import ExternalLinkIcon from "./ExternalLinkIcon";
 
 const SUB_TABS = [
   { id: "builder", label: "Builder" },
   { id: "raw", label: "Raw JSON" },
 ];
 
-const DOCS_URLS: Partial<Record<SubscriptionMethod, string>> = {
+const DOCS_URLS: Record<SubscriptionMethod, string> = {
   programSubscribe:
     "https://www.helius.dev/docs/api-reference/rpc/websocket/programsubscribe",
+  accountSubscribe:
+    "https://www.helius.dev/docs/api-reference/rpc/websocket/accountsubscribe",
+  logsSubscribe:
+    "https://www.helius.dev/docs/api-reference/rpc/websocket/logssubscribe",
+  slotSubscribe:
+    "https://www.helius.dev/docs/api-reference/rpc/websocket/slotsubscribe",
+  signatureSubscribe:
+    "https://www.helius.dev/docs/api-reference/rpc/websocket/signaturesubscribe",
+  rootSubscribe:
+    "https://www.helius.dev/docs/api-reference/rpc/websocket/rootsubscribe",
 };
 
 interface Props {
   activeMethod: SubscriptionMethod;
   form: FormState;
   onFormChange: (form: FormState) => void;
-  programIdError?: string;
+  addressError?: string;
   filterErrors?: Record<number, string>;
-  onValidateProgramId: () => void;
+  onValidateAddress: () => void;
 }
 
 export default function RequestBuilderCard({
   activeMethod,
   form,
   onFormChange,
-  programIdError,
+  addressError,
   filterErrors,
-  onValidateProgramId,
+  onValidateAddress,
 }: Props) {
   const [subTab, setSubTab] = useState("builder");
 
@@ -46,15 +58,19 @@ export default function RequestBuilderCard({
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground">Request Builder</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          Request Builder
+          <HelpTooltip text="Configure your WebSocket subscription request. Use the Builder tab for a guided form or the Raw JSON tab to see the generated request payload." />
+        </h2>
         {docsUrl && (
           <a
             href={docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-primary hover:text-primary/80 transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
           >
-            Docs
+            View {activeMethod} docs
+            <ExternalLinkIcon />
           </a>
         )}
       </div>
@@ -71,9 +87,9 @@ export default function RequestBuilderCard({
           activeMethod={activeMethod}
           form={form}
           onFormChange={onFormChange}
-          programIdError={programIdError}
+          addressError={addressError}
           filterErrors={filterErrors}
-          onValidateProgramId={onValidateProgramId}
+          onValidateAddress={onValidateAddress}
         />
       ) : previewRequest ? (
         <RawJsonPreview json={previewRequest} />

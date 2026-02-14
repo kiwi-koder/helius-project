@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
-import { FormState, ValidationErrors, Filter, SubscriptionMethod, ProgramSubscribeForm } from "./lib/types";
+import { useState, useCallback, useMemo } from "react";
+import { FormState, ValidationErrors, Filter, SubscriptionMethod, ProgramSubscribeForm, AccountSubscribeForm, LogsSubscribeForm, SignatureSubscribeForm } from "./lib/types";
 import { buildRequest } from "./lib/buildRequest";
 import { useWebSocketManager } from "./hooks/useWebSocketManager";
 import Header from "./components/Header";
@@ -13,15 +13,36 @@ import StatusBar from "./components/StatusBar";
 import LogsPanel from "./components/LogsPanel";
 
 const DEFAULT_PROGRAM_SUBSCRIBE: ProgramSubscribeForm = {
-  programId: "",
+  programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   commitment: "confirmed",
   encoding: "base64",
   filters: [],
 };
 
+const DEFAULT_ACCOUNT_SUBSCRIBE: AccountSubscribeForm = {
+  accountId: "H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG",
+  commitment: "confirmed",
+  encoding: "base64",
+};
+
+const DEFAULT_LOGS_SUBSCRIBE: LogsSubscribeForm = {
+  filter: "mentions",
+  mentionAddress: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  commitment: "confirmed",
+};
+
+const DEFAULT_SIGNATURE_SUBSCRIBE: SignatureSubscribeForm = {
+  signature: "2EBVM6cB8vAAD93Ktr6Vd8p67XPbQzCJX47MpReuiCXJAtcjaxpvWpcg9Ege1Nr5Tk3a2GFrByT7WPBjdsTycY9b",
+  commitment: "finalized",
+  enableReceivedNotification: false,
+};
+
 const DEFAULT_FORM: FormState = {
   method: "programSubscribe",
   programSubscribe: DEFAULT_PROGRAM_SUBSCRIBE,
+  accountSubscribe: DEFAULT_ACCOUNT_SUBSCRIBE,
+  logsSubscribe: DEFAULT_LOGS_SUBSCRIBE,
+  signatureSubscribe: DEFAULT_SIGNATURE_SUBSCRIBE,
 };
 
 function validateUrl(url: string): string | undefined {
@@ -32,8 +53,8 @@ function validateUrl(url: string): string | undefined {
   return undefined;
 }
 
-function validateProgramId(id: string): string | undefined {
-  if (!id.trim()) return "Program ID is required";
+function validateAddress(id: string, label: string): string | undefined {
+  if (!id.trim()) return `${label} is required`;
   return undefined;
 }
 
@@ -57,13 +78,32 @@ function validateFilters(filters: Filter[]): Record<number, string> {
   return errors;
 }
 
-function validateForm(form: FormState): { programId?: string; filters: Record<number, string> } {
+function validateForm(form: FormState): { address?: string; filters: Record<number, string> } {
   switch (form.method) {
     case "programSubscribe": {
       const ps = form.programSubscribe;
       return {
-        programId: validateProgramId(ps.programId),
+        address: validateAddress(ps.programId, "Program ID"),
         filters: validateFilters(ps.filters),
+      };
+    }
+    case "accountSubscribe": {
+      return {
+        address: validateAddress(form.accountSubscribe.accountId, "Account address"),
+        filters: {},
+      };
+    }
+    case "logsSubscribe": {
+      const ls = form.logsSubscribe ?? DEFAULT_LOGS_SUBSCRIBE;
+      return {
+        address: ls.filter === "mentions" ? validateAddress(ls.mentionAddress, "Mention address") : undefined,
+        filters: {},
+      };
+    }
+    case "signatureSubscribe": {
+      return {
+        address: validateAddress(form.signatureSubscribe.signature, "Transaction signature"),
+        filters: {},
       };
     }
     default:
@@ -72,31 +112,22 @@ function validateForm(form: FormState): { programId?: string; filters: Record<nu
 }
 
 export default function PlaygroundPage() {
-  const [wsUrl, setWsUrl] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("helius-ws-url") || "";
-    }
-    return "";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("helius-ws-url", wsUrl);
-  }, [wsUrl]);
+  const [wsUrl, setWsUrl] = useState("");
 
   const [activeMethod, setActiveMethod] = useState<SubscriptionMethod>("programSubscribe");
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const [touched, setTouched] = useState({ url: false, programId: false });
+  const [touched, setTouched] = useState({ url: false, address: false });
 
   const ws = useWebSocketManager();
-  const requestIdRef = { current: 0 };
+  const [requestId, setRequestId] = useState(0);
 
   const handleMethodChange = useCallback((method: string) => {
     const m = method as SubscriptionMethod;
     setActiveMethod(m);
     setForm((prev) => ({ ...prev, method: m }));
     setErrors({});
-    setTouched({ url: false, programId: false });
+    setTouched({ url: false, address: false });
   }, []);
 
   const handleValidateUrl = useCallback(() => {
@@ -104,34 +135,30 @@ export default function PlaygroundPage() {
     setErrors((e) => ({ ...e, url: validateUrl(wsUrl) }));
   }, [wsUrl]);
 
-  const handleValidateProgramId = useCallback(() => {
-    setTouched((t) => ({ ...t, programId: true }));
-    setErrors((e) => ({ ...e, programId: validateProgramId(form.programSubscribe.programId) }));
-  }, [form.programSubscribe.programId]);
+  const handleValidateAddress = useCallback(() => {
+    setTouched((t) => ({ ...t, address: true }));
+    const { address } = validateForm(form);
+    setErrors((e) => ({ ...e, address }));
+  }, [form]);
 
   const filterErrors = useMemo(
     () => validateFilters(form.programSubscribe.filters),
     [form.programSubscribe.filters],
   );
 
-  const isValid = useMemo(() => {
-    const urlErr = validateUrl(wsUrl);
-    const { programId: pidErr, filters: fErrs } = validateForm(form);
-    return !urlErr && !pidErr && Object.keys(fErrs).length === 0;
-  }, [wsUrl, form]);
-
   const handleSubscribe = useCallback(() => {
     const urlErr = validateUrl(wsUrl);
-    const { programId: pidErr, filters: fErrs } = validateForm(form);
-    setErrors({ url: urlErr, programId: pidErr, filters: fErrs });
-    setTouched({ url: true, programId: true });
+    const { address: addrErr, filters: fErrs } = validateForm(form);
+    setErrors({ url: urlErr, address: addrErr, filters: fErrs });
+    setTouched({ url: true, address: true });
 
-    if (urlErr || pidErr || Object.keys(fErrs).length > 0) return;
+    if (urlErr || addrErr || Object.keys(fErrs).length > 0) return;
 
-    requestIdRef.current += 1;
-    const request = buildRequest(form, requestIdRef.current);
+    const nextId = requestId + 1;
+    setRequestId(nextId);
+    const request = buildRequest(form, nextId);
     ws.connect(wsUrl, request);
-  }, [wsUrl, form, ws]);
+  }, [wsUrl, form, ws, requestId]);
 
   const handleUnsubscribe = useCallback(() => {
     ws.disconnect();
@@ -154,15 +181,15 @@ export default function PlaygroundPage() {
             activeMethod={activeMethod}
             form={form}
             onFormChange={setForm}
-            programIdError={touched.programId ? errors.programId : undefined}
+            addressError={touched.address ? errors.address : undefined}
             filterErrors={filterErrors}
-            onValidateProgramId={handleValidateProgramId}
+            onValidateAddress={handleValidateAddress}
           />
 
           <SubscribeButton
             connectionStatus={ws.connectionStatus}
             subscriptionStatus={ws.subscriptionStatus}
-            disabled={!isValid}
+            disabled={false}
             onSubscribe={handleSubscribe}
             onUnsubscribe={handleUnsubscribe}
           />

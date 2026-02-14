@@ -1,5 +1,6 @@
 import { Filter } from "../../lib/types";
 import FilterRow from "./FilterRow";
+import HelpTooltip from "../HelpTooltip";
 
 interface Props {
   filters: Filter[];
@@ -25,8 +26,9 @@ export default function FiltersBuilder({ filters, onChange, errors }: Props) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">
+        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           Filters <span className="text-muted-foreground font-normal">(optional)</span>
+          <HelpTooltip text="Narrow which updates you get. dataSize = by account size; memcmp = bytes at an offset." />
         </label>
         <button
           onClick={handleAdd}

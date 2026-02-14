@@ -1,4 +1,5 @@
-import { useState } from "react";
+import HelpTooltip from "./HelpTooltip";
+import ExternalLinkIcon from "./ExternalLinkIcon";
 
 interface Props {
   value: string;
@@ -10,9 +11,21 @@ interface Props {
 export default function WebSocketUrlInput({ value, onChange, error, onValidate }: Props) {
   return (
     <div className="mb-4">
-      <label htmlFor="ws-url" className="mb-1.5 block text-sm font-medium text-foreground">
-        WebSocket URL
-      </label>
+      <div className="mb-1.5 flex items-center justify-between">
+        <label htmlFor="ws-url" className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+          WebSocket URL
+          <HelpTooltip text="The Helius WebSocket endpoint URL including your API key. Used to establish a real-time streaming connection to the Solana network." />
+        </label>
+        <a
+          href="https://dashboard.helius.dev/websockets"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+        >
+          Get your URL
+          <ExternalLinkIcon />
+        </a>
+      </div>
       <input
         id="ws-url"
         type="text"

@@ -1,4 +1,4 @@
-import { FormState, ProgramSubscribeForm, Filter, SubscriptionMethod } from "./types";
+import { FormState, ProgramSubscribeForm, AccountSubscribeForm, LogsSubscribeForm, SignatureSubscribeForm, Filter, SubscriptionMethod } from "./types";
 
 function buildFilterParam(filter: Filter): object {
   if (filter.type === "dataSize") {
@@ -30,6 +30,55 @@ function buildProgramSubscribeRequest(form: ProgramSubscribeForm, requestId: num
   };
 }
 
+function buildAccountSubscribeRequest(form: AccountSubscribeForm, requestId: number) {
+  return {
+    jsonrpc: "2.0",
+    id: requestId,
+    method: "accountSubscribe",
+    params: [
+      form.accountId.trim(),
+      {
+        commitment: form.commitment,
+        encoding: form.encoding,
+      },
+    ],
+  };
+}
+
+function buildLogsSubscribeRequest(form: LogsSubscribeForm, requestId: number) {
+  const filter =
+    form.filter === "mentions"
+      ? { mentions: [form.mentionAddress.trim()] }
+      : form.filter;
+
+  return {
+    jsonrpc: "2.0",
+    id: requestId,
+    method: "logsSubscribe",
+    params: [
+      filter,
+      {
+        commitment: form.commitment,
+      },
+    ],
+  };
+}
+
+function buildSignatureSubscribeRequest(form: SignatureSubscribeForm, requestId: number) {
+  return {
+    jsonrpc: "2.0",
+    id: requestId,
+    method: "signatureSubscribe",
+    params: [
+      form.signature.trim(),
+      {
+        commitment: form.commitment,
+        enableReceivedNotification: form.enableReceivedNotification,
+      },
+    ],
+  };
+}
+
 const UNSUBSCRIBE_METHODS: Record<SubscriptionMethod, string> = {
   programSubscribe: "programUnsubscribe",
   accountSubscribe: "accountUnsubscribe",
@@ -43,6 +92,24 @@ export function buildRequest(formState: FormState, requestId: number) {
   switch (formState.method) {
     case "programSubscribe":
       return buildProgramSubscribeRequest(formState.programSubscribe, requestId);
+    case "accountSubscribe":
+      return buildAccountSubscribeRequest(formState.accountSubscribe, requestId);
+    case "logsSubscribe":
+      return buildLogsSubscribeRequest(formState.logsSubscribe, requestId);
+    case "slotSubscribe":
+      return {
+        jsonrpc: "2.0",
+        id: requestId,
+        method: "slotSubscribe",
+      };
+    case "signatureSubscribe":
+      return buildSignatureSubscribeRequest(formState.signatureSubscribe, requestId);
+    case "rootSubscribe":
+      return {
+        jsonrpc: "2.0",
+        id: requestId,
+        method: "rootSubscribe",
+      };
     default:
       throw new Error(`Unsupported method: ${formState.method}`);
   }

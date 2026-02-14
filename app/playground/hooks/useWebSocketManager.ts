@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ConnectionStatus, SubscriptionStatus, LogEvent } from "../lib/types";
 
 interface UseWebSocketManagerReturn {
@@ -35,7 +35,7 @@ export function useWebSocketManager(): UseWebSocketManagerReturn {
   const pendingRequestRef = useRef<object | null>(null);
   const pendingUrlRef = useRef<string>("");
   const subscriptionIdRef = useRef<number | null>(null);
-  const requestIdRef = useRef(0);
+  const connectInternalRef = useRef<(url: string, request: object) => void>(() => {});
 
   const addEvent = useCallback((type: LogEvent["type"], data: string) => {
     setEvents((prev) => [...prev, createEvent(type, data)]);
@@ -65,7 +65,7 @@ export function useWebSocketManager(): UseWebSocketManagerReturn {
 
     reconnectTimerRef.current = setTimeout(() => {
       if (pendingUrlRef.current && pendingRequestRef.current) {
-        connectInternal(pendingUrlRef.current, pendingRequestRef.current);
+        connectInternalRef.current(pendingUrlRef.current, pendingRequestRef.current);
       }
     }, delay);
   }, [addEvent]);
@@ -147,6 +147,10 @@ export function useWebSocketManager(): UseWebSocketManagerReturn {
     },
     [cleanupSocket, addEvent, scheduleReconnect]
   );
+
+  useEffect(() => {
+    connectInternalRef.current = connectInternal;
+  }, [connectInternal]);
 
   const connect = useCallback(
     (url: string, request: object) => {

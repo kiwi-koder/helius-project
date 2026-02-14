@@ -2,11 +2,11 @@ import Tabs from "./Tabs";
 
 const METHODS = [
   { id: "programSubscribe", label: "programSubscribe" },
-  { id: "accountSubscribe", label: "accountSubscribe", disabled: true },
-  { id: "logsSubscribe", label: "logsSubscribe", disabled: true },
-  { id: "slotSubscribe", label: "slotSubscribe", disabled: true },
-  { id: "signatureSubscribe", label: "signatureSubscribe", disabled: true },
-  { id: "rootSubscribe", label: "rootSubscribe", disabled: true },
+  { id: "accountSubscribe", label: "accountSubscribe" },
+  { id: "logsSubscribe", label: "logsSubscribe" },
+  { id: "slotSubscribe", label: "slotSubscribe" },
+  { id: "signatureSubscribe", label: "signatureSubscribe" },
+  { id: "rootSubscribe", label: "rootSubscribe" },
 ];
 
 interface Props {

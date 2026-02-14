@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useCallback, useMemo, useState, memo } from "react";
+import { useLayoutEffect, useRef, useCallback, useMemo, useState, memo } from "react";
 import { LogEvent } from "../lib/types";
 
 interface Props {
