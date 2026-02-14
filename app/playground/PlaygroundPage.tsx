@@ -164,42 +164,58 @@ export default function PlaygroundPage() {
     ws.disconnect();
   }, [ws]);
 
+  const isUrlValid = wsUrl.startsWith("ws://") || wsUrl.startsWith("wss://");
+
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-3xl">
-        <Header />
+    <div
+      className={`min-h-screen bg-background px-4 transition-all duration-700 ease-out ${
+        isUrlValid ? "py-8" : "flex items-center justify-center"
+      }`}
+    >
+      <div className={`mx-auto w-full transition-all duration-700 ease-out ${isUrlValid ? "max-w-3xl" : "max-w-xl"}`}>
+        <Header compact={isUrlValid} />
         <WebSocketUrlInput
           value={wsUrl}
           onChange={setWsUrl}
           error={touched.url ? errors.url : undefined}
           onValidate={handleValidateUrl}
+          minimal={!isUrlValid}
         />
-        <MethodTabs activeMethod={activeMethod} onSelect={handleMethodChange} />
 
-        <div className="flex flex-col gap-4">
-          <RequestBuilderCard
-            activeMethod={activeMethod}
-            form={form}
-            onFormChange={setForm}
-            addressError={touched.address ? errors.address : undefined}
-            filterErrors={filterErrors}
-            onValidateAddress={handleValidateAddress}
-          />
+        <div
+          className={`transition-all duration-700 ease-out ${
+            isUrlValid
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4 pointer-events-none h-0 overflow-hidden"
+          }`}
+        >
+          <MethodTabs activeMethod={activeMethod} onSelect={handleMethodChange} />
 
-          <SubscribeButton
-            connectionStatus={ws.connectionStatus}
-            subscriptionStatus={ws.subscriptionStatus}
-            disabled={false}
-            onSubscribe={handleSubscribe}
-            onUnsubscribe={handleUnsubscribe}
-          />
+          <div className="flex flex-col gap-4">
+            <RequestBuilderCard
+              activeMethod={activeMethod}
+              form={form}
+              onFormChange={setForm}
+              addressError={touched.address ? errors.address : undefined}
+              filterErrors={filterErrors}
+              onValidateAddress={handleValidateAddress}
+            />
 
-          <StatusBar
-            connectionStatus={ws.connectionStatus}
-            subscriptionStatus={ws.subscriptionStatus}
-          />
+            <SubscribeButton
+              connectionStatus={ws.connectionStatus}
+              subscriptionStatus={ws.subscriptionStatus}
+              disabled={false}
+              onSubscribe={handleSubscribe}
+              onUnsubscribe={handleUnsubscribe}
+            />
 
-          <LogsPanel events={ws.events} onClearLogs={ws.clearLogs} />
+            <StatusBar
+              connectionStatus={ws.connectionStatus}
+              subscriptionStatus={ws.subscriptionStatus}
+            />
+
+            <LogsPanel events={ws.events} onClearLogs={ws.clearLogs} />
+          </div>
         </div>
       </div>
     </div>
