@@ -1,3 +1,10 @@
+/**
+ * Main page component for the Helius WebSocket Playground.
+ *
+ * Manages top-level form state, validation, and orchestrates the WebSocket
+ * connection lifecycle via {@link useWebSocketManager}. Renders the method
+ * tabs, request builder, subscribe button, status bar, and event log.
+ */
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
@@ -5,13 +12,13 @@ import { FormState, ValidationErrors, Filter, SubscriptionMethod, ProgramSubscri
 import { buildRequest } from "./lib/buildRequest";
 import { useWebSocketManager } from "./hooks/useWebSocketManager";
 import Header from "./components/Header";
-import WebSocketUrlInput from "./components/WebSocketUrlInput";
 import MethodTabs from "./components/MethodTabs";
 import RequestBuilderCard from "./components/RequestBuilderCard";
 import SubscribeButton from "./components/SubscribeButton";
 import StatusBar from "./components/StatusBar";
 import LogsPanel from "./components/LogsPanel";
 
+/** Default form values — each method is pre-filled with well-known Solana addresses for quick testing. */
 const DEFAULT_PROGRAM_SUBSCRIBE: ProgramSubscribeForm = {
   programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   commitment: "confirmed",
@@ -45,19 +52,13 @@ const DEFAULT_FORM: FormState = {
   signatureSubscribe: DEFAULT_SIGNATURE_SUBSCRIBE,
 };
 
-function validateUrl(url: string): string | undefined {
-  if (!url.trim()) return "URL is required";
-  if (!url.startsWith("ws://") && !url.startsWith("wss://")) {
-    return "URL must start with ws:// or wss://";
-  }
-  return undefined;
-}
-
+/** Return an error message if the address/key field is empty, otherwise `undefined`. */
 function validateAddress(id: string, label: string): string | undefined {
   if (!id.trim()) return `${label} is required`;
   return undefined;
 }
 
+/** Validate each filter row, returning a map of row-index to error message. */
 function validateFilters(filters: Filter[]): Record<number, string> {
   const errors: Record<number, string> = {};
   filters.forEach((f, i) => {
@@ -78,6 +79,7 @@ function validateFilters(filters: Filter[]): Record<number, string> {
   return errors;
 }
 
+/** Run all validations for the active method and return any address/filter errors. */
 function validateForm(form: FormState): { address?: string; filters: Record<number, string> } {
   switch (form.method) {
     case "programSubscribe": {
@@ -112,28 +114,20 @@ function validateForm(form: FormState): { address?: string; filters: Record<numb
 }
 
 export default function PlaygroundPage() {
-  const [wsUrl, setWsUrl] = useState("");
-
   const [activeMethod, setActiveMethod] = useState<SubscriptionMethod>("programSubscribe");
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const [touched, setTouched] = useState({ url: false, address: false });
+  const [touched, setTouched] = useState({ address: false });
 
   const ws = useWebSocketManager();
-  const [requestId, setRequestId] = useState(0);
 
   const handleMethodChange = useCallback((method: string) => {
     const m = method as SubscriptionMethod;
     setActiveMethod(m);
     setForm((prev) => ({ ...prev, method: m }));
     setErrors({});
-    setTouched({ url: false, address: false });
+    setTouched({ address: false });
   }, []);
-
-  const handleValidateUrl = useCallback(() => {
-    setTouched((t) => ({ ...t, url: true }));
-    setErrors((e) => ({ ...e, url: validateUrl(wsUrl) }));
-  }, [wsUrl]);
 
   const handleValidateAddress = useCallback(() => {
     setTouched((t) => ({ ...t, address: true }));
@@ -147,75 +141,51 @@ export default function PlaygroundPage() {
   );
 
   const handleSubscribe = useCallback(() => {
-    const urlErr = validateUrl(wsUrl);
     const { address: addrErr, filters: fErrs } = validateForm(form);
-    setErrors({ url: urlErr, address: addrErr, filters: fErrs });
-    setTouched({ url: true, address: true });
+    setErrors({ address: addrErr, filters: fErrs });
+    setTouched({ address: true });
 
-    if (urlErr || addrErr || Object.keys(fErrs).length > 0) return;
+    if (addrErr || Object.keys(fErrs).length > 0) return;
 
-    const nextId = requestId + 1;
-    setRequestId(nextId);
-    const request = buildRequest(form, nextId);
-    ws.connect(wsUrl, request);
-  }, [wsUrl, form, ws, requestId]);
+    const request = buildRequest(form);
+    ws.connect(request);
+  }, [form, ws]);
 
   const handleUnsubscribe = useCallback(() => {
     ws.disconnect();
   }, [ws]);
 
-  const isUrlValid = wsUrl.startsWith("ws://") || wsUrl.startsWith("wss://");
-
   return (
-    <div
-      className={`min-h-screen bg-background px-4 transition-all duration-700 ease-out ${
-        isUrlValid ? "py-8" : "flex items-center justify-center"
-      }`}
-    >
-      <div className={`mx-auto w-full transition-all duration-700 ease-out ${isUrlValid ? "max-w-3xl" : "max-w-xl"}`}>
-        <Header compact={isUrlValid} />
-        <WebSocketUrlInput
-          value={wsUrl}
-          onChange={setWsUrl}
-          error={touched.url ? errors.url : undefined}
-          onValidate={handleValidateUrl}
-          minimal={!isUrlValid}
-        />
+    <div className="min-h-screen bg-background px-4 py-8">
+      <div className="mx-auto w-full max-w-3xl">
+        <Header compact />
 
-        <div
-          className={`transition-all duration-700 ease-out ${
-            isUrlValid
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-4 pointer-events-none h-0 overflow-hidden"
-          }`}
-        >
-          <MethodTabs activeMethod={activeMethod} onSelect={handleMethodChange} />
+        <MethodTabs activeMethod={activeMethod} onSelect={handleMethodChange} />
 
-          <div className="flex flex-col gap-4">
-            <RequestBuilderCard
-              activeMethod={activeMethod}
-              form={form}
-              onFormChange={setForm}
-              addressError={touched.address ? errors.address : undefined}
-              filterErrors={filterErrors}
-              onValidateAddress={handleValidateAddress}
-            />
+        <div className="flex flex-col gap-4">
+          <RequestBuilderCard
+            activeMethod={activeMethod}
+            form={form}
+            onFormChange={setForm}
+            addressError={touched.address ? errors.address : undefined}
+            filterErrors={filterErrors}
+            onValidateAddress={handleValidateAddress}
+          />
 
-            <SubscribeButton
-              connectionStatus={ws.connectionStatus}
-              subscriptionStatus={ws.subscriptionStatus}
-              disabled={false}
-              onSubscribe={handleSubscribe}
-              onUnsubscribe={handleUnsubscribe}
-            />
+          <SubscribeButton
+            connectionStatus={ws.connectionStatus}
+            subscriptionStatus={ws.subscriptionStatus}
+            disabled={false}
+            onSubscribe={handleSubscribe}
+            onUnsubscribe={handleUnsubscribe}
+          />
 
-            <StatusBar
-              connectionStatus={ws.connectionStatus}
-              subscriptionStatus={ws.subscriptionStatus}
-            />
+          <StatusBar
+            connectionStatus={ws.connectionStatus}
+            subscriptionStatus={ws.subscriptionStatus}
+          />
 
-            <LogsPanel events={ws.events} onClearLogs={ws.clearLogs} />
-          </div>
+          <LogsPanel events={ws.events} onClearLogs={ws.clearLogs} />
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FormState, SubscriptionMethod } from "../lib/types";
 import BuilderForm from "./builder/BuilderForm";
 import RawJsonPreview from "./RawJsonPreview";
-import { buildRequest } from "../lib/buildRequest";
+import { buildRequest, buildHeliusRequest } from "../lib/buildRequest";
 import Tabs from "./Tabs";
 import HelpTooltip from "./HelpTooltip";
 import ExternalLinkIcon from "./ExternalLinkIcon";
@@ -48,7 +48,7 @@ export default function RequestBuilderCard({
 
   let previewRequest: object | null = null;
   try {
-    previewRequest = buildRequest(form, 1);
+    previewRequest = buildHeliusRequest(form);
   } catch {
     // method not yet supported — preview will be null
   }
@@ -60,7 +60,7 @@ export default function RequestBuilderCard({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           Request Builder
-          <HelpTooltip text="Configure your WebSocket subscription request. Use the Builder tab for a guided form or the Raw JSON tab to see the generated request payload." />
+          <HelpTooltip text="Configure your WebSocket subscription request. Use the Builder tab for a guided form or the Raw JSON tab to see the payload sent to the Helius WebSocket." />
         </h2>
         {docsUrl && (
           <a

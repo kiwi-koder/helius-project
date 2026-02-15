@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Helius WebSocket Playground
+
+An interactive browser-based playground for testing [Helius](https://www.helius.dev/) Solana WebSocket (PubSub) subscriptions in real time.
+
+## Supported Methods
+
+- **programSubscribe** — stream account updates for a given program (with optional `dataSize` / `memcmp` filters)
+- **accountSubscribe** — watch a single account for changes
+- **logsSubscribe** — tail transaction logs (`all`, `allWithVotes`, or by mention address)
+- **slotSubscribe** — receive slot advancement notifications
+- **signatureSubscribe** — track a transaction signature until confirmation
+- **rootSubscribe** — receive root slot updates
+
+## Key Features
+
+- Preset addresses for quick testing (SPL Token Program, popular accounts)
+- Real-time event log with sent/received/error/info entries
+- Form validation with inline error messages
+- Raw JSON preview of the underlying RPC request
+- Auto-reconnect with exponential back-off
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org/) 16 (App Router)
+- [React](https://react.dev/) 19
+- [TypeScript](https://www.typescriptlang.org/) 5
+- [Tailwind CSS](https://tailwindcss.com/) 4
+
+## Project Structure
+
+```
+app/playground/
+  PlaygroundPage.tsx           # Main page component (form state, validation, layout)
+  hooks/
+    useWebSocketManager.ts     # WebSocket lifecycle, reconnect logic, event log
+  lib/
+    types.ts                   # Shared TypeScript interfaces and types
+    buildRequest.ts            # Builds subscribe/unsubscribe messages per method
+  components/
+    Header.tsx                 # Page header / branding
+    MethodTabs.tsx             # Subscription method tab selector
+    RequestBuilderCard.tsx     # Card wrapping the active builder form
+    SubscribeButton.tsx        # Connect / disconnect button
+    StatusBar.tsx              # Connection & subscription status indicator
+    LogsPanel.tsx              # Scrollable event log
+    RawJsonPreview.tsx         # Collapsible raw JSON request preview
+    WebSocketUrlInput.tsx      # Proxy URL display
+    builder/
+      BuilderForm.tsx          # Renders the correct builder for the active method
+      ProgramSubscribeBuilder.tsx
+      AccountSubscribeBuilder.tsx
+      LogsSubscribeBuilder.tsx
+      SignatureSubscribeBuilder.tsx
+      AddressInput.tsx         # Reusable address/pubkey input with validation
+      ProgramIdInput.tsx       # Program ID input with preset selector
+      FiltersBuilder.tsx       # dataSize / memcmp filter list
+      FilterRow.tsx            # Single filter row
+      SegmentedControl.tsx     # Segmented toggle (commitment, encoding, etc.)
+      constants.ts             # Preset addresses and label maps
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- The companion **[helius-websocket-proxy](https://github.com/kiwi-koder/helius-websocket-proxy)** running locally (or a deployed instance)
+
+### Environment
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_WS_PROXY_URL=ws://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> The proxy URL defaults to `ws://localhost:3001` if the variable is not set.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Install & Run
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) to use the playground.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command         | Description                        |
+| --------------- | ---------------------------------- |
+| `npm run dev`   | Start the dev server (Turbopack)   |
+| `npm run build` | Production build                   |
+| `npm run start` | Serve the production build         |
+| `npm run lint`  | Run ESLint                         |
