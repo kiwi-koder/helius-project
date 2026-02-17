@@ -21,43 +21,10 @@ An interactive browser-based playground for testing [Helius](https://www.helius.
 
 ## Tech Stack
 
-- [Next.js](https://nextjs.org/) 16 (App Router)
-- [React](https://react.dev/) 19
-- [TypeScript](https://www.typescriptlang.org/) 5
-- [Tailwind CSS](https://tailwindcss.com/) 4
-
-## Project Structure
-
-```
-app/playground/
-  PlaygroundPage.tsx           # Main page component (form state, validation, layout)
-  hooks/
-    useWebSocketManager.ts     # WebSocket lifecycle, reconnect logic, event log
-  lib/
-    types.ts                   # Shared TypeScript interfaces and types
-    buildRequest.ts            # Builds subscribe/unsubscribe messages per method
-  components/
-    Header.tsx                 # Page header / branding
-    MethodTabs.tsx             # Subscription method tab selector
-    RequestBuilderCard.tsx     # Card wrapping the active builder form
-    SubscribeButton.tsx        # Connect / disconnect button
-    StatusBar.tsx              # Connection & subscription status indicator
-    LogsPanel.tsx              # Scrollable event log
-    RawJsonPreview.tsx         # Collapsible raw JSON request preview
-    WebSocketUrlInput.tsx      # Proxy URL display
-    builder/
-      BuilderForm.tsx          # Renders the correct builder for the active method
-      ProgramSubscribeBuilder.tsx
-      AccountSubscribeBuilder.tsx
-      LogsSubscribeBuilder.tsx
-      SignatureSubscribeBuilder.tsx
-      AddressInput.tsx         # Reusable address/pubkey input with validation
-      ProgramIdInput.tsx       # Program ID input with preset selector
-      FiltersBuilder.tsx       # dataSize / memcmp filter list
-      FilterRow.tsx            # Single filter row
-      SegmentedControl.tsx     # Segmented toggle (commitment, encoding, etc.)
-      constants.ts             # Preset addresses and label maps
-```
+- [Next.js](https://nextjs.org/)
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
 
 ## Getting Started
 
